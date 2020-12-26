@@ -1,6 +1,8 @@
 import React from 'react';
 import logo from './logo.svg';
 import './App.css';
+import './image-canvas';
+import ImageCanvas from "./image-canvas";
 
 function App() {
   return (
@@ -18,6 +20,7 @@ function App() {
         >
           Learn React
         </a>
+        <ImageCanvas/>
       </header>
     </div>
   );
