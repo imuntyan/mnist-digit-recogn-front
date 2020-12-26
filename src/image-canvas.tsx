@@ -2,66 +2,68 @@ import React, {useRef, useEffect} from 'react';
 import './image-canvas.css'
 
 
+class CanvasPainting {
+
+    canvas: any;
+    context: any;
+    coord = {x:0 , y:0};
+    paint = false;
+
+    constructor(canvas: any, context: any) {
+        this.canvas = canvas;
+        this.context = context;
+    }
+
+    updatePosition(event: MouseEvent){
+        this.coord.x = event.clientX - this.canvas.offsetLeft;
+        this.coord.y = event.clientY - this.canvas.offsetTop;
+    }
+
+    startPainting(event: MouseEvent){
+        this.paint = true;
+        this.updatePosition(event);
+    }
+
+    stopPainting(){
+        this.paint = false;
+    }
+
+    doPaint(event: MouseEvent){
+        if (!this.paint) return;
+        this.context.beginPath();
+
+        this.context.lineWidth = 5;
+
+        // Sets the end of the lines drawn
+        // to a round shape.
+        this.context.lineCap = 'round';
+
+        this.context.strokeStyle = "#0000a0";
+
+        // The cursor to start drawing
+        // moves to this coordinate
+        this.context.moveTo(this.coord.x, this.coord.y);
+
+        // The position of the cursor
+        // gets updated as we move the
+        // mouse around.
+        this.updatePosition(event);
+
+        // A line is traced from start
+        // coordinate to this coordinate
+        this.context.lineTo(this.coord.x , this.coord.y);
+
+        // Draws the line.
+        this.context.stroke();
+    }
+
+}
 
 const ImageCanvas = (props: any) => {
-
     const canvasRef = useRef(null);
-
-    let pressed: boolean;
-    const moves: any[] = [];
-
-    function redraw(canvas: any, context: any) {
-        context.strokeStyle = "#0000a0";
-        context.lineJoin = "round";
-        context.lineWidth = 6;
-
-        // context.moveTo(199, 0);
-        // context.lineTo(0,150);
-        // context.closePath();
-        // context.stroke();
-
-        for(var i=0; i < moves.length; i++)
-        {
-            context.beginPath();
-            if(moves[i][2]){
-                context.moveTo(moves[i-1][0], moves[i-1][1]);
-            }else{
-                context.moveTo(moves[i][0], moves[i][1]);
-            }
-            context.lineTo(moves[i][0], moves[i][1]);
-            context.closePath();
-            context.stroke();
-        }
-    }
-
-    const mouseDown = (e: any, canvas: any, context: any) => {
-        pressed= true;
-        moves.push([e.pageX - canvas.offsetLeft,
-            e.pageY - canvas.offsetTop,
-            false]);
-        redraw(canvas, context);
-    }
-    const mouseUp = () => {
-        pressed= false;
-    }
-
-    const mouseOut = () => {
-        pressed= false;
-    }
-
-    const mouseMove = (e: any, canvas: any, context: any) => {
-        if(pressed){
-            moves.push([e.pageX - canvas.offsetLeft,
-                e.pageY - canvas.offsetTop,
-                true]);
-            redraw(canvas, context);
-        }
-    }
-
     useEffect(() => {
         const canvas: any = canvasRef.current;
         const context = canvas.getContext('2d')
-
         const applyInside = <K extends keyof DocumentEventMap>(eventType: K, f: (e: DocumentEventMap[K]) => any) => {
             document.addEventListener(eventType, e => {
                 if (canvas.contains(e.target)) {
@@ -70,15 +72,12 @@ const ImageCanvas = (props: any) => {
                 }
             });
         };
-
-        applyInside('mousedown', e => {mouseDown(e, canvas, context)});
-        applyInside('mouseout', e => {mouseOut()});
-        applyInside('mouseup', e => {mouseUp()});
-        applyInside('mousemove', e => {mouseMove(e, canvas, context)});
-
+        const cp = new CanvasPainting(canvas, context);
+        applyInside('mousedown', e => cp.startPainting(e));
+        applyInside('mouseout', e => cp.stopPainting());
+        applyInside('mouseup', e => cp.stopPainting());
+        applyInside('mousemove', e => cp.doPaint(e));
     }, []);
-
-
     return <canvas ref={canvasRef} className="ImageCanvas" height={200} width={200} {...props} />
 }
 
