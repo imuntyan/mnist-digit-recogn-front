@@ -45,13 +45,11 @@ const ImageCanvas = (props: any) => {
         pressed= false;
     }
 
-    const mouseLeave = () => {
-        console.log("Mouse Leave")
+    const mouseOut = () => {
         pressed= false;
     }
 
     const mouseMove = (e: any, canvas: any, context: any) => {
-        console.log(moves.length)
         if(pressed){
             moves.push([e.pageX - canvas.offsetLeft,
                 e.pageY - canvas.offsetTop,
@@ -60,40 +58,23 @@ const ImageCanvas = (props: any) => {
         }
     }
 
-
     useEffect(() => {
         const canvas: any = canvasRef.current;
         const context = canvas.getContext('2d')
-        //Our first draw
-        // context.fillStyle = '#000000'
-        // context.fillRect(0, 0, context.canvas.width, context.canvas.height)
 
-        document.addEventListener('mousedown', e => {
-            if (canvas.contains(e.target)) {
-                mouseDown(e, canvas, context);
-                return;
-            }
-        });
-        document.addEventListener('mouseout', e => {
-            if (canvas.contains(e.target)) {
-                mouseLeave();
-                return;
-            }
-        });
+        const applyInside = <K extends keyof DocumentEventMap>(eventType: K, f: (e: DocumentEventMap[K]) => any) => {
+            document.addEventListener(eventType, e => {
+                if (canvas.contains(e.target)) {
+                    f(e);
+                    return;
+                }
+            });
+        };
 
-        document.addEventListener('mouseup', e => {
-            if (canvas.contains(e.target)) {
-                mouseUp();
-                return;
-            }
-        });
-
-        document.addEventListener('mousemove', e => {
-            if (canvas.contains(e.target)) {
-                mouseMove(e, canvas, context);
-                return;
-            }
-        });
+        applyInside('mousedown', e => {mouseDown(e, canvas, context)});
+        applyInside('mouseout', e => {mouseOut()});
+        applyInside('mouseup', e => {mouseUp()});
+        applyInside('mousemove', e => {mouseMove(e, canvas, context)});
 
     }, []);
 
