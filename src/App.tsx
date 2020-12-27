@@ -7,17 +7,19 @@ import Controls from "./controls";
 
 function App() {
 
-    const ref = useRef(null);
+    const ref = useRef();
 
     const clearHandler = (e: Event) => {
-        console.log(e)
-        const x: any = ref;
-        console.log(x);
-        // x.clear();
+        const canvas: ImageCanvas | undefined = ref.current;
+        // @ts-ignore
+        canvas.clear();
     }
 
     const submitHandler = (e: Event) => {
-        console.log(e)
+        const canvas: ImageCanvas | undefined = ref.current;
+        // @ts-ignore
+        const data = canvas.getDataUrl();
+        console.log(data);
     }
 
 
