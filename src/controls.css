@@ -1,0 +1,9 @@
+.Controls {
+    padding-top: 10px;
+    display: flex;
+    flex-direction: row;
+    /*flex: 1 0 auto;*/
+}
+.Controls button {
+    margin: 10px;
+}

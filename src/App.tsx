@@ -1,29 +1,34 @@
-import React from 'react';
+import React, {createRef, useEffect, useRef} from 'react';
 import logo from './logo.svg';
 import './App.css';
 import './image-canvas';
 import ImageCanvas from "./image-canvas";
+import Controls from "./controls";
 
 function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-        <ImageCanvas/>
-      </header>
-    </div>
-  );
+
+    const ref = useRef(null);
+
+    const clearHandler = (e: Event) => {
+        console.log(e)
+        const x: any = ref;
+        console.log(x);
+        // x.clear();
+    }
+
+    const submitHandler = (e: Event) => {
+        console.log(e)
+    }
+
+
+    return (
+        <div className="App">
+            <header className="App-header">
+                <ImageCanvas ref={ref}/>
+                <Controls clearHandler={clearHandler} submitHandler={submitHandler}/>
+            </header>
+        </div>
+    );
 }
 
 export default App;
