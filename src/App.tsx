@@ -20,6 +20,23 @@ function App() {
         // @ts-ignore
         const data = canvas.getDataUrl();
         console.log(data);
+
+        fetch('http://localhost:8000/api/image', {
+            mode: 'cors',
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                data: data
+            })
+        }).then((r) => {
+            return r.json();
+        }).then(r => {
+            console.log(r);
+        })
+
     }
 
 
