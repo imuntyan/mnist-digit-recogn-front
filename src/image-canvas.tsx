@@ -5,23 +5,33 @@ import './image-canvas.css'
 class CanvasPainting {
 
     canvas: HTMLCanvasElement;
-    context: any;
-    coord = {x:0 , y:0};
+    context: CanvasRenderingContext2D;
     paint = false;
+    img = new Image();
+    lastPoint: any;
+    scaleFactor = 0;
 
-    constructor(canvas: any, context: any) {
+    constructor(canvas: any, context: CanvasRenderingContext2D) {
         this.canvas = canvas;
         this.context = context;
+        const rect = this.canvas.getBoundingClientRect();
+        // this.canvas.width = getComputedStyle()
+        this.img.src = process.env.PUBLIC_URL + '/brush.png';
     }
 
-    updatePosition(event: MouseEvent){
-        this.coord.x = event.clientX - this.canvas.offsetLeft;
-        this.coord.y = event.clientY - this.canvas.offsetTop;
+    getPosition(event: MouseEvent) {
+        const rect = this.canvas.getBoundingClientRect();
+        // console.log(this.canvas.width + ":" + this.canvas.height + ":" + rect.left + ":" + rect.right + ":" + rect.top +
+        // ":" + rect.bottom + ":" + event.clientX + ":" + event.clientY)
+        return {
+            x: (event.clientX - rect.left) / (rect.right - rect.left) * this.canvas.width,
+            y: (event.clientY - rect.top) / (rect.bottom - rect.top) * this.canvas.height
+        }
     }
 
     startPainting(event: MouseEvent){
         this.paint = true;
-        this.updatePosition(event);
+        this.lastPoint = this.getPosition(event);
     }
 
     stopPainting() {
@@ -38,37 +48,51 @@ class CanvasPainting {
 
     doPaint(event: MouseEvent){
         if (!this.paint) return;
+
         this.context.beginPath();
 
-        this.context.lineWidth = 5;
+        this.context.lineWidth = 2;
 
-        // Sets the end of the lines drawn
-        // to a round shape.
-        this.context.lineCap = 'round';
 
-        this.context.strokeStyle = "#0000a0";
+        const distanceBetween = function (p1: any, p2: any) {
+            return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
+        };
+        const randomInt = function (min: number, max: number) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        };
 
-        // The cursor to start drawing
-        // moves to this coordinate
-        this.context.moveTo(this.coord.x, this.coord.y);
+        let currentPoint = this.getPosition(event);
+        let dist = distanceBetween(this.lastPoint, currentPoint);
+        let dx = 2 * (currentPoint.x - this.lastPoint.x) / dist;
+        let dy = 2 * (currentPoint.y - this.lastPoint.y) / dist;
 
-        // The position of the cursor
-        // gets updated as we move the
-        // mouse around.
-        this.updatePosition(event);
+        let x = this.lastPoint.x;
+        let y = this.lastPoint.y;
 
-        // A line is traced from start
-        // coordinate to this coordinate
-        this.context.lineTo(this.coord.x , this.coord.y);
+        this.scaleFactor = 0.5 * Math.min(5.0 / dist, 0.6) + 0.5 * this.scaleFactor;
+        for (let i = 0; i < dist; i += 2) {
+            x = x + dx;
+            y = y + dy;
+            this.context.save();
+            this.context.translate(x, y);
+            this.context.globalAlpha = 0.1 + this.scaleFactor;
+            this.context.scale(0.5 + this.scaleFactor, 0.5 + this.scaleFactor);
+            this.context.rotate(Math.PI * 180 / randomInt(0, 180));
+            this.context.drawImage(this.img, 0 - 12.5, 0 - 12.5);
+            this.context.restore();
+        }
+        this.lastPoint = currentPoint;
 
-        // Draws the line.
-        this.context.stroke();
     }
 
 }
 
 // https://reactjs.org/docs/refs-and-the-dom.html#creating-refs
 class ImageCanvas extends React.Component {
+
+    HEIGHT = 250;
+    WIDTH = 275;
+
     props: any;
     canvasRef: any;
     cp: CanvasPainting | null = null;
@@ -92,12 +116,13 @@ class ImageCanvas extends React.Component {
     }
 
     init() {
-        const canvas: any = this.canvasRef.current;
-        const context = canvas.getContext('2d')
+        const canvas: HTMLCanvasElement = this.canvasRef.current;
+        const context: CanvasRenderingContext2D = canvas.getContext('2d') as CanvasRenderingContext2D;
         const applyInside = <K extends keyof DocumentEventMap>(eventType: K, f: (e: DocumentEventMap[K]) => any) => {
             document.addEventListener(eventType, e => {
-                if (canvas.contains(e.target)) {
+                if (canvas.contains(e.target as Node)) {
                     f(e);
+                    e.preventDefault();
                     return;
                 }
             });
@@ -109,7 +134,12 @@ class ImageCanvas extends React.Component {
         applyInside('mousemove', e => this.cp?.doPaint(e));
     }
     render() {
-        return <canvas ref={this.canvasRef} className="ImageCanvas" height={200} width={200} />
+        return (
+            <div>
+                <img src={process.env.PUBLIC_URL + '/logo192.png'} />
+                <canvas ref={this.canvasRef} className="ImageCanvas" height={this.HEIGHT} width={this.WIDTH} />
+            </div>
+            )
     }
 }
 
